@@ -1,4 +1,4 @@
-import fastapi, pydantic, components.logger, components.StreamAudio, components.DownloadAudio, components.InfoCenter
+import fastapi, pydantic, components.logger, components.StreamAudio, components.DownloadAudio, components.InfoCenter, components.Login
 
 from AppCore import app
 

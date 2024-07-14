@@ -1,4 +1,4 @@
-from fastapi import Cookie, responses, Response
+from fastapi import Cookie, responses, Request
 from pydantic import BaseModel
 from typing import Optional
 
@@ -17,31 +17,44 @@ def reg(req: LoginRequest):
     res = db.reg_new_user(req.login, req.password)
 
     if res:
-        return responses.HTMLResponse(content=200)
+        return responses.JSONResponse(content={"success": True}, status_code=200)
     else:
-        return responses.HTMLResponse(status_code=403)
+        return responses.JSONResponse(content={"success": False})
     
 
-@app.post("/login/log")
-def log(req: LoginRequest, resp: Response):
+@app.post("/login/log", response_model=dict)
+def log(req: LoginRequest):
     res = db.login_user(req.login, req.password)
-    print(req.login)
     if res:
-        resp.set_cookie(key="login", value=req.login, httponly=True)
+        resp = responses.JSONResponse(content={"success": True}, status_code=200)
+        resp.set_cookie("login", req.login, httponly=True)
 
-        return responses.JSONResponse(content={})
+        return resp
     else:
-        return responses.HTMLResponse(content="403" ,status_code=403)
+        return responses.JSONResponse(content={"success": False}, status_code=403)
 
 
 @app.post("/login/delog")
 def gelog():
     
-    Response.set_cookie(key="login", value="None")
+    res = responses.JSONResponse(content={"success": True})
+    res.set_cookie("login", "None", httponly=True, secure=True)
 
-    return responses.HTMLResponse(content=200)
+    return res
 
 @app.get("/login/getinfo")
-def getinfo(user: Optional[str] = Cookie(None)):
-    print(user)
-    return responses.JSONResponse(content= {"1": user})
+def getinfo(user: Request):
+    return responses.JSONResponse(content= {"login": user.cookies.get("login")})
+
+@app.get("/cookie")
+def check_cookie(req: Request):
+    
+    if not "Cookie" in req.headers:
+        res = responses.JSONResponse(content={})
+        res.headers["Set-Cookie"] = "same-site=strict"
+
+        return res
+    
+    else:
+
+        return responses.JSONResponse(content={})

@@ -1,7 +1,6 @@
 import fastapi
 
-from AppCore import app
-from components.S3 import S3
+from AppCore import app, s3
 
 @app.get("/download/{file}")
 async def download_audio(
@@ -10,7 +9,7 @@ async def download_audio(
         )
 ):
     
-    file_stream = S3.get_file("audio-host-store", file)
+    file_stream = s3.get_file("audio-host-store", file)
 
     file_stream = file_stream['Body'].iter_chunks()
     headers = {

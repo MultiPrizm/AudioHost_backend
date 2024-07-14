@@ -1,24 +1,37 @@
-import boto3
+import boto3, os, colorama, components.logger
 from fastapi import UploadFile
 from components.logger import *
 
 class S3():
 
-    s3 = boto3.client("s3")
-
-    @staticmethod
-    def buckets_list():
-        buckets = S3.s3.list_buckets()
+    def __init__(self, native_aunt: bool = True) -> None:
+        try:
+            if native_aunt:
+                self.session = boto3.Session(
+                    aws_access_key_id=os.getenv("AWS_ACCESS_KEY"),
+                    aws_secret_access_key=os.getenv("AWS_SECRET_KEY"),
+                    region_name=os.getenv("AWS_REGION")
+                )
+                self.s3 = self.session.client("s3")
+            else:
+                self.s3 = boto3.client("s3")
+            
+            print("S3[", colorama.Fore.GREEN + "OK",colorama.Style.RESET_ALL + "]: S3 connected.")
+        except Exception as e:
+            print("S3[", colorama.Fore.RED + "ERROR",colorama.Style.RESET_ALL + "]: S3 connect fail.")
+            components.logger.error(e)
+    
+    def buckets_list(self):
+        buckets = self.s3.list_buckets()
 
         return buckets["Buckets"]
     
-    @staticmethod
-    def upload_file(file: UploadFile, bucket_name: str):
+    def upload_file(self, file: UploadFile, bucket_name: str):
         
         try:
             content = file.read()
 
-            S3.s3.upload_fileobj(
+            self.s3.upload_fileobj(
                 Fileobj = content,
                 Bucket = bucket_name,
                 Key = file.filename
@@ -30,15 +43,15 @@ class S3():
 
             return False
     
-    @staticmethod
-    def get_file(bucket: str, file: str):
+    def get_file(self, bucket: str, file: str):
 
         try:
-            response = S3.s3.get_object(Bucket=bucket, Key=file)
+            response = self.s3.get_object(Bucket=bucket, Key=file)
 
             return response
-        except S3.s3.exceptions.NoSuchKey:
+        except self.s3.exceptions.NoSuchKey:
             return False
-        except BaseException as e:
+        except Exception as e:
             error(e)
+            return False
 

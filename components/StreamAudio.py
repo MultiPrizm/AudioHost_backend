@@ -1,7 +1,6 @@
 import fastapi
 
-from AppCore import app
-from components.S3 import S3
+from AppCore import app, s3
 
 @app.get("/audio/{file}")
 async def steam_audio(
@@ -10,7 +9,7 @@ async def steam_audio(
         )
     ):
     
-    s3_response = S3.get_file("audio-host-store", file)
+    s3_response = s3.get_file("audio-host-store", file)
 
     if not s3_response:
 

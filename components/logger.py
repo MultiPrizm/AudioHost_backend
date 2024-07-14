@@ -1,4 +1,4 @@
-import logging, os
+import logging, os, AppCore, fastapi
 
 LOGPATH = "./log"
 
@@ -27,3 +27,12 @@ def debug(mes: str):
 
 def error(mes: str):
     error_logger.error(mes)
+
+@AppCore.app.exception_handler(Exception)
+def unicorn_exception_handler(request: fastapi.Request, exc: Exception):
+
+    error(exc)
+
+    return fastapi.responses.JSONResponse(content={}, status_code=500)
+
+    

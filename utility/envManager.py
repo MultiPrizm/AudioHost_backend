@@ -1,20 +1,28 @@
-import os
+import os, json
 
 if not os.path.isfile("../.env"):
-        # Якщо файл не існує, створюємо його
+
         with open("../.env", 'w') as file:
-            file.write('')  # Створюємо порожній файл
-        print(f'Файл {".env"} було створено.')
+            file.write('')
+
+if not os.path.isfile("../conf.json"):
+
+        with open("../conf.json", 'w') as file:
+            data = {
+                 "awscli": False,
+                 "cookies_encrypt": False
+            }
+            json.dump(data, file, indent=4, sort_keys=True)
+
 
 def save_to_env(key, value, env_file='.env'):
-    # Прочитати існуючі дані з файлу .env
+
     try:
         with open(env_file, 'r') as file:
             lines = file.readlines()
     except FileNotFoundError:
         lines = []
 
-    # Оновити або додати нову змінну
     updated = False
     for i, line in enumerate(lines):
         if line.startswith(f'{key}='):
@@ -25,6 +33,16 @@ def save_to_env(key, value, env_file='.env'):
     if not updated:
         lines.append(f'{key}={value}\n')
 
-    # Записати оновлені дані назад у файл .env
     with open(env_file, 'w') as file:
         file.writelines(lines)
+
+
+def edit_conf_json(key: str, value: str):
+    data = None
+    with open("../conf.json", 'r') as f:
+        data = f.read()
+        data = json.loads(data)
+        data[key] = value
+          
+    with open("../conf.json", 'w') as f:
+        json.dump(data, f, indent=4, sort_keys=True)

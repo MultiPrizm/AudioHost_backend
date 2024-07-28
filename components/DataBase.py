@@ -50,22 +50,25 @@ class MSDB():
             return False
     
     def get_popular_audio(self, page = 1):
+        try:
+            self.cursor.execute("SELECT * FROM popularSongs LIMIT 5 OFFSET %s", ((page - 1) * 5,))
 
-        self.cursor.execute("SELECT * FROM popularSongs LIMIT 5 OFFSET %s", ((page - 1) * 5,))
+            songs_id = self.cursor.fetchall()
 
-        songs_id = self.cursor.fetchall()
+            songs_id_list = []
+            songs_list = []
 
-        songs_id_list = []
-        songs_list = []
+            for i in songs_id:
+                songs_id_list.append(i[0])
+            
+            for i in songs_id_list:
 
-        for i in songs_id:
-            songs_id_list.append(i[0])
-        
-        for i in songs_id_list:
-
-            self.cursor.execute("SELECT download_endpoint FROM audiolist WHERE id = %s", (int(i),))
-            songs_list.append(self.cursor.fetchall())
-        
-        return songs_list
+                self.cursor.execute("SELECT download_endpoint FROM audiolist WHERE id = %s", (int(i),))
+                songs_list.append(self.cursor.fetchall())
+            
+            return songs_list
+        except Exception as e:
+            components.logger.error(e)
+            return []
 
     

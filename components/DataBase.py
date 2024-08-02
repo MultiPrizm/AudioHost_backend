@@ -1,4 +1,4 @@
-import dotenv, os, hashlib, colorama, components.logger, sys
+import dotenv, os, hashlib, colorama, components.logger, sys, json
 
 import mysql
 import mysql.connector
@@ -31,7 +31,7 @@ class MSDB():
         if 0 != len(res):
             return False
 
-        self.cursor.execute("INSERT INTO users (login, password, usertype) VALUES (%s, %s, %s)", (login, hashlib.sha256(password.encode()).hexdigest(), "user"))
+        self.cursor.execute("INSERT INTO users (login, password, usertype, playlist) VALUES (%s, %s, %s, %s)", (login, hashlib.sha256(password.encode()).hexdigest(), "user", json.dumps({"1": []})))
         self.db.commit()
         return True
     
@@ -63,12 +63,60 @@ class MSDB():
             
             for i in songs_id_list:
 
-                self.cursor.execute("SELECT download_endpoint FROM audiolist WHERE id = %s", (int(i),))
+                self.cursor.execute("SELECT * FROM audiolist WHERE id = %s", (int(i),))
                 songs_list.append(self.cursor.fetchall())
             
             return songs_list
         except Exception as e:
             components.logger.error(e)
+
             return []
+        
+    def get_playlist(self, login):
+
+        try:
+            self.cursor.execute("SELECT playlist FROM users WHERE login = %s", (login,))
+            res = self.cursor.fetchall()
+            res = json.loads(res[0][0])
+            return res["1"]
+
+        except Exception as e:
+            components.logger.error(e)
+
+            return []
+    
+    def update_playlist(self, _list: list, login: str) -> bool:
+        try:
+            # Перевірка типу _list
+            if not isinstance(_list, list):
+                raise TypeError("Expected _list to be of type list")
+
+            # Перетворення списку в JSON-рядок
+            playlist = {"1": _list}
+            playlist_json = json.dumps(playlist)  # Це має бути рядок JSON
+
+            # Виконання запиту
+            self.cursor.execute(
+                "UPDATE users SET playlist = %s WHERE login = %s",
+                (playlist_json, login)
+            )
+            self.db.commit()
+
+            return True
+
+        except Exception as e:
+            components.logger.error("Error updating playlist: %s", e)
+            return False
+    
+    def get_tracks_from_id(self, idlist: list):
+
+        tracklist = []
+
+        for i in idlist:
+
+            self.cursor.execute("SELECT * FROM audiolist WHERE id = %s", (int(i),))
+            tracklist.append(self.cursor.fetchall())
+        
+        return tracklist
 
     
